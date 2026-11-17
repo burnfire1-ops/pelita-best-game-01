@@ -151,19 +151,22 @@ export function stageShot(name, world) {
   }
   if (name === 'play') {
     // Night 4, mid-fight: two lanterns, Api + Lebar tier 1, and a BLUE beam.
-    // Staging: the beam first DODGES (aims away from every shadow) for 20 s so
-    // the wave accumulates, then TRACKS the nearest shadow in blue for 0.5 s,
-    // so the captured frame shows the blue beam BURNING a mid-field enemy with
-    // embers, 4 shadows alive, 2 lanterns firing. (The plain 15 s sweep left
-    // the beam on empty sky with only 2 shadows alive and no hit.)
+    // Staging: the beam first DODGES (aims away from every shadow) for 30 s so
+    // the wave accumulates and spreads to both sides, then TRACKS the nearest
+    // shadow in blue for 0.75 s, so the captured frame shows the blue beam
+    // BURNING a centre-field enemy with embers, 5 shadows alive on both sides
+    // (left, centre and right), 2 lanterns firing. (Round 1 used dodge 20 s /
+    // track 0.5 s: the beam hit, but all shadows were on the left. Round 2
+    // scanned hold 12-36 s x track 0.5-1.5 s in Node and picked hold 30 s /
+    // track 0.75 s as the best balanced frame: hit at (600,463), HP 80.)
     world.reset();
     world.startNight(4, {
       light: 320,
       upgrades: { api: 1, lebar: 1, lampion: 0, tempo: 0 },
       lanterns: [0, 1],
     });
-    const DODGE_SECONDS = 20;
-    const TRACK_SECONDS = 0.5;
+    const DODGE_SECONDS = 30;
+    const TRACK_SECONDS = 0.75;
     const dodgeSteps = Math.round(DODGE_SECONDS / STEP);
     const totalSteps = Math.round((DODGE_SECONDS + TRACK_SECONDS) / STEP);
     let over = false;
