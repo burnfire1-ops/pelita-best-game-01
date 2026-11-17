@@ -6,7 +6,7 @@
 // paints the same frame.
 
 import {
-  BEAM, COLOR_ORDER, COLORS, ENEMIES, FIELD, FONT, LANTERN, PALETTE, TEMPLE,
+  BEAM, COLOR_ORDER, COLORS, ENEMIES, FIELD, FONT, LANTERN, PALETTE, SEA_TOP, TEMPLE,
 } from './config.js';
 
 export const SCREEN_TITLE = 'title';
@@ -60,7 +60,8 @@ function makeStars() {
   };
   const stars = [];
   for (let i = 0; i < 90; i += 1) {
-    stars.push({ x: next() * FIELD.width, y: next() * 300, r: 0.6 + next() * 1.4, tw: next() * 6 });
+    // Stars stay in the sky, above the horizon.
+    stars.push({ x: next() * FIELD.width, y: next() * (SEA_TOP - 20), r: 0.6 + next() * 1.4, tw: next() * 6 });
   }
   return stars;
 }
@@ -121,12 +122,12 @@ export function createRenderer(canvas) {
   }
 
   function drawSky(state) {
-    const gradient = context.createLinearGradient(0, 0, 0, FIELD.height);
+    // The sky covers only the strip above the horizon; the sea fills the rest.
+    const gradient = context.createLinearGradient(0, 0, 0, SEA_TOP);
     gradient.addColorStop(0, PALETTE.skyTop);
-    gradient.addColorStop(0.55, PALETTE.skyMid);
-    gradient.addColorStop(1, PALETTE.seaDeep);
+    gradient.addColorStop(1, PALETTE.skyMid);
     context.fillStyle = gradient;
-    context.fillRect(0, 0, FIELD.width, FIELD.height);
+    context.fillRect(0, 0, FIELD.width, SEA_TOP);
     // Stars, twinkling on the world clock.
     for (const star of STARS) {
       const alpha = 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(state.time * 1.4 + star.tw));
@@ -146,17 +147,17 @@ export function createRenderer(canvas) {
   }
 
   function drawSea(state) {
-    // The sea fills the lower half and the side edges; the island sits in it.
+    // The sea fills everything below the horizon; the island sits in it.
     context.fillStyle = PALETTE.sea;
-    context.fillRect(0, 470, FIELD.width, FIELD.height - 470);
+    context.fillRect(0, SEA_TOP, FIELD.width, FIELD.height - SEA_TOP);
     context.fillStyle = PALETTE.seaDeep;
     context.fillRect(0, 0, 90, FIELD.height);
     context.fillRect(FIELD.width - 90, 0, 90, FIELD.height);
-    // Slow waves: three sine lines, phase from the world clock.
+    // Slow waves: five sine lines spread across the sea, phase from the world clock.
     context.strokeStyle = PALETTE.wave;
     context.lineWidth = 2;
-    for (let row = 0; row < 3; row += 1) {
-      const baseY = 520 + row * 62;
+    for (let row = 0; row < 5; row += 1) {
+      const baseY = 290 + row * 90;
       context.beginPath();
       for (let x = 0; x <= FIELD.width; x += 16) {
         const y = baseY + Math.sin(x * 0.012 + state.time * 0.9 + row * 2.1) * 7;
@@ -174,24 +175,24 @@ export function createRenderer(canvas) {
   }
 
   function drawVillage(state) {
-    // A fishing village along the top edge: hut silhouettes, warm windows.
+    // A fishing village on the far shore, sitting on the horizon.
     context.fillStyle = '#0c1424';
     const huts = [
       { x: 120, w: 90, h: 60 }, { x: 260, w: 70, h: 48 }, { x: 980, w: 80, h: 55 },
       { x: 1100, w: 95, h: 62 },
     ];
     for (const hut of huts) {
-      context.fillRect(hut.x, 60 - hut.h, hut.w, hut.h);
+      context.fillRect(hut.x, SEA_TOP - hut.h, hut.w, hut.h);
       context.beginPath();
-      context.moveTo(hut.x - 8, 60 - hut.h);
-      context.lineTo(hut.x + hut.w / 2, 60 - hut.h - 26);
-      context.lineTo(hut.x + hut.w + 8, 60 - hut.h);
+      context.moveTo(hut.x - 8, SEA_TOP - hut.h);
+      context.lineTo(hut.x + hut.w / 2, SEA_TOP - hut.h - 26);
+      context.lineTo(hut.x + hut.w + 8, SEA_TOP - hut.h);
       context.closePath();
       context.fill();
       // A warm window, flickering gently on the clock.
       const flicker = 0.75 + 0.25 * Math.sin(state.time * 2 + hut.x);
       context.fillStyle = `rgba(242,201,76,${flicker.toFixed(2)})`;
-      context.fillRect(hut.x + hut.w / 2 - 7, 60 - hut.h + 14, 14, 14);
+      context.fillRect(hut.x + hut.w / 2 - 7, SEA_TOP - hut.h + 14, 14, 14);
       context.fillStyle = '#0c1424';
     }
     // A fishing boat, bobbing on the right.
@@ -220,10 +221,10 @@ export function createRenderer(canvas) {
     ellipse(TEMPLE.x, TEMPLE.y + 28, 238, 112);
     context.fillStyle = PALETTE.sandLight;
     ellipse(TEMPLE.x, TEMPLE.y + 22, 200, 92);
-    // Beach grass tufts.
+    // Beach grass tufts, all on the island's rock ring.
     context.strokeStyle = '#5d7a3a';
     context.lineWidth = 2;
-    for (const [gx, gy] of [[430, 500], [850, 500], [470, 300], [820, 300], [640, 520]]) {
+    for (const [gx, gy] of [[430, 500], [850, 500], [470, 340], [820, 340], [640, 520]]) {
       context.beginPath();
       context.moveTo(gx, gy);
       context.lineTo(gx - 5, gy - 12);

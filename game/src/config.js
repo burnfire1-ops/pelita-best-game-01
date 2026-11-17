@@ -11,6 +11,11 @@ export const STEP = 1 / 60;
 /** The temple the shadows march on. Enemies that touch it damage it. */
 export const TEMPLE = { x: 640, y: 400, radius: 52, hp: 100, repair: 25 };
 
+/** The sea's surface (the horizon), in field coordinates. Visual only: the
+ *  island's top edge is at y=302, so the surface sits above it and the whole
+ *  island reads as sand in the water, never as a disc floating in the sky. */
+export const SEA_TOP = 210;
+
 /** Beam colours. Gold, red and blue; keys 1/2/3 or Space to switch. */
 export const COLORS = {
   gold: { name: 'Emas', hex: '#f2c94c', glow: '#fde68a', dark: '#b45309' },
