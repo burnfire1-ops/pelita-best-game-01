@@ -10,8 +10,7 @@ import { EVENT_OVER, EVENT_WIN } from './world.js';
 import { SCREEN_OVER, SCREEN_PLAY, SCREEN_TITLE, SCREEN_UPGRADE, SCREEN_WIN } from './render.js';
 
 const START_SECONDS = 5;
-const PLAY_SECONDS = 20;
-const WIN_LIMIT_SECONDS = 150;
+const PLAY_SECONDS = 15;
 
 function angleDiff(a, b) {
   let d = a - b;
@@ -92,29 +91,29 @@ export function autoSpend(world) {
 export function stageShot(name, world) {
   const state = world.state;
   if (name === 'win') {
-    // Night 7 with everything bought and six lanterns, played by the smart pilot
-    // until the boss falls. The stats on the win screen are real.
+    // A real full campaign, played by the smart pilot with sensible spending,
+    // until the boss falls. The stats on the win screen are the campaign's own.
     world.reset();
-    world.startNight(7, {
-      light: 200,
-      upgrades: { api: 3, lebar: 3, lampion: 3, tempo: 3 },
-      lanterns: [0, 1, 2, 3, 4, 5],
-    });
+    world.startRun();
     let won = false;
-    for (let index = 0; index < WIN_LIMIT_SECONDS / STEP; index += 1) {
+    for (let stepCount = 0; stepCount < 7 * 200 * 60; stepCount += 1) {
       const events = world.step(STEP, smartPilot(state));
       if (events & EVENT_WIN) { won = true; break; }
       if (events & EVENT_OVER) break;
+      if (state.phase === 'upgrade') {
+        autoSpend(world);
+        world.nextNight();
+      }
     }
     if (!won) {
       // Fallback: a constructed win, still rendered by the real win screen.
       state.phase = 'win';
       state.nightsCleared = 7;
-      state.kills = 124;
-      state.lightEarned = 860;
+      state.kills = 150;
+      state.lightEarned = 1400;
       state.lanternsPlaced = 6;
     }
-    return { screen: won ? SCREEN_WIN : SCREEN_WIN, best: 7 };
+    return { screen: SCREEN_WIN, best: 7 };
   }
   if (name === 'upgrade') {
     // A constructed gap after night 3: the real upgrade screen over real values.
@@ -134,8 +133,9 @@ export function stageShot(name, world) {
     return { screen: SCREEN_UPGRADE, best: 3 };
   }
   if (name === 'play') {
-    // Night 4, mid-fight: two lanterns, Api + Lebar tier 1, and a BLUE beam
-    // burning the nearest shadow, so the dossier shows the colour system.
+    // Night 4, mid-fight: two lanterns, Api + Lebar tier 1, and a BLUE beam.
+    // The beam sweeps (so several shadows stay alive in frame) but burns blue,
+    // so the dossier shows the colour system and the lanterns at once.
     world.reset();
     world.startNight(4, {
       light: 320,
@@ -144,7 +144,7 @@ export function stageShot(name, world) {
     });
     let over = false;
     for (let index = 0; index < PLAY_SECONDS / STEP; index += 1) {
-      const pilot = trackPilot(state);
+      const pilot = sweepPilot(state);
       pilot.color = 'blue';
       const events = world.step(STEP, pilot);
       if (events & EVENT_OVER) { over = true; break; }

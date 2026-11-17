@@ -433,6 +433,7 @@ export function createWorld(rng) {
     // Temple destroyed.
     if (state.templeHp <= 0) {
       state.templeHp = 0;
+      for (const lantern of state.lanterns) lantern.target = null;
       state.phase = 'over';
       return events | EVENT_OVER;
     }
@@ -442,6 +443,7 @@ export function createWorld(rng) {
     if (queueEmpty && fieldEmpty) {
       state.nightsCleared = Math.max(state.nightsCleared, state.night);
       if (state.night >= 7) {
+        for (const lantern of state.lanterns) lantern.target = null;
         state.phase = 'win';
         return events | EVENT_WIN;
       }

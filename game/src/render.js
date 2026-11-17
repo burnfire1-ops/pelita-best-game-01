@@ -616,7 +616,7 @@ export function createRenderer(canvas) {
     // Lantern count, bottom left.
     text(`Lampion: ${state.lanterns.length}/${LANTERN.max}`, 24, FIELD.height - 18, 18, PALETTE.muted, 'left');
     if (state.night < 7) {
-      text('Klik lampion di layar jeda untuk memasang', FIELD.width - 24, FIELD.height - 18, 16, PALETTE.muted, 'right');
+      text('Lampion dipasang di layar jeda', FIELD.width - 24, FIELD.height - 18, 16, PALETTE.muted, 'right');
     }
   }
 
@@ -777,7 +777,6 @@ export function createRenderer(canvas) {
     text('Ratu Kidul tumbang. Fajar naik atas desa nelayan.', FIELD.width / 2, 196, 22, PALETTE.text);
     drawPanel(FIELD.width / 2 - 260, 240, 520, 160);
     drawStats(state, FIELD.width / 2 - 210, 286);
-    if (best > 0) text(`Malam terjauh: ${best} / 7`, FIELD.width / 2, 432, 20, PALETTE.text, 'center', '700');
     drawButton(WIN_AGAIN, 'MAIN LAGI');
   }
 
