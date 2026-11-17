@@ -10,7 +10,6 @@ import { EVENT_OVER, EVENT_WIN } from './world.js';
 import { SCREEN_OVER, SCREEN_PLAY, SCREEN_TITLE, SCREEN_UPGRADE, SCREEN_WIN } from './render.js';
 
 const START_SECONDS = 5;
-const PLAY_SECONDS = 15;
 
 function angleDiff(a, b) {
   let d = a - b;
@@ -42,6 +41,24 @@ export function sweepPilot(state) {
   const sweep = span > 0.05 ? span / 2 : 0.4;
   const aimAngle = mid + Math.sin(state.time * 1.1) * sweep;
   return { aimAngle, color: 'gold' };
+}
+
+/** The dodge pilot (screenshot staging only): aim at the angle farthest from
+ *  every live enemy, so the beam burns nothing and the wave accumulates. */
+export function dodgePilot(state) {
+  const angles = state.enemies.map((enemy) => angleTo(enemy.x, enemy.y));
+  let best = -Math.PI / 2;
+  let bestMin = -1;
+  for (let deg = -180; deg < 180; deg += 5) {
+    const angle = (deg * Math.PI) / 180;
+    let minDist = Infinity;
+    for (const enemyAngle of angles) {
+      minDist = Math.min(minDist, Math.abs(angleDiff(angle, enemyAngle)));
+    }
+    if (angles.length === 0) minDist = Math.PI;
+    if (minDist > bestMin) { bestMin = minDist; best = angle; }
+  }
+  return { aimAngle: best, color: 'gold' };
 }
 
 /** The tracking pilot: aim at the most threatening enemy (nearest the temple)
@@ -134,17 +151,24 @@ export function stageShot(name, world) {
   }
   if (name === 'play') {
     // Night 4, mid-fight: two lanterns, Api + Lebar tier 1, and a BLUE beam.
-    // The beam sweeps (so several shadows stay alive in frame) but burns blue,
-    // so the dossier shows the colour system and the lanterns at once.
+    // Staging: the beam first DODGES (aims away from every shadow) for 20 s so
+    // the wave accumulates, then TRACKS the nearest shadow in blue for 0.5 s,
+    // so the captured frame shows the blue beam BURNING a mid-field enemy with
+    // embers, 4 shadows alive, 2 lanterns firing. (The plain 15 s sweep left
+    // the beam on empty sky with only 2 shadows alive and no hit.)
     world.reset();
     world.startNight(4, {
       light: 320,
       upgrades: { api: 1, lebar: 1, lampion: 0, tempo: 0 },
       lanterns: [0, 1],
     });
+    const DODGE_SECONDS = 20;
+    const TRACK_SECONDS = 0.5;
+    const dodgeSteps = Math.round(DODGE_SECONDS / STEP);
+    const totalSteps = Math.round((DODGE_SECONDS + TRACK_SECONDS) / STEP);
     let over = false;
-    for (let index = 0; index < PLAY_SECONDS / STEP; index += 1) {
-      const pilot = sweepPilot(state);
+    for (let index = 0; index < totalSteps; index += 1) {
+      const pilot = index < dodgeSteps ? dodgePilot(state) : trackPilot(state);
       pilot.color = 'blue';
       const events = world.step(STEP, pilot);
       if (events & EVENT_OVER) { over = true; break; }
